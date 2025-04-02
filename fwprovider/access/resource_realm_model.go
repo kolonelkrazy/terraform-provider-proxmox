@@ -54,10 +54,10 @@ type realmResourceModel struct {
 	Verify              bool         `tfsdk:"verify"`
 }
 
-const promptFormat = "(?:none|login|consent|select_account|\\S+)"
-const syncAttributesFormat = "\\w+=[^,]+(,\\s*\\w+=[^,]+)*"
-const acrValuesFormat = "^[^\\x00-\\x1F\\x7F <>#\"]*$"
-const domainFormat = "\\S+"
+const RealmPromptFormat = `(?:none|login|consent|select_account|\S+)`
+const RealmSyncAttributesFormat = `\w+=[^,]+(,\s*\w+=[^,]+)*`
+const RealmAcrValuesFormat = `^[^\x00-\x1F\x7F <>#"]*$`
+const RealmDomainFormat = `\S+`
 
 func parseValidateMode(id string) (*realmResourceModel, error) {
 	/*
@@ -115,6 +115,24 @@ func parseValidateType(id string) (*realmResourceModel, error) {
 	 *	ad | ldap | openid | pam | pve
 	 *
 	 */
+
+	model := &realmResourceModel{}
+	return model, nil
+}
+
+func parseValidateDomain(id string) (*realmResourceModel, error) {
+
+	model := &realmResourceModel{}
+	return model, nil
+}
+
+func parseValidatePrompt(id string) (*realmResourceModel, error) {
+
+	model := &realmResourceModel{}
+	return model, nil
+}
+
+func parseValidateACRValues(id string) (*realmResourceModel, error) {
 
 	model := &realmResourceModel{}
 	return model, nil
