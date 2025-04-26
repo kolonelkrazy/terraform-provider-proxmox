@@ -27,12 +27,13 @@ import (
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/access"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/cluster/acme"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/cluster/ha"
+	"github.com/bpg/terraform-provider-proxmox/fwprovider/cluster/hardwaremapping"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/cluster/metrics"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/cluster/options"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/config"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/nodes"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/nodes/apt"
-	"github.com/bpg/terraform-provider-proxmox/fwprovider/nodes/hardwaremapping"
+	"github.com/bpg/terraform-provider-proxmox/fwprovider/nodes/datastores"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/nodes/network"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/nodes/vm"
 	"github.com/bpg/terraform-provider-proxmox/proxmox"
@@ -505,6 +506,7 @@ func (p *proxmoxProvider) Resources(_ context.Context) []func() resource.Resourc
 		apt.NewStandardRepositoryResource,
 		ha.NewHAGroupResource,
 		ha.NewHAResourceResource,
+		hardwaremapping.NewDirResource,
 		hardwaremapping.NewPCIResource,
 		hardwaremapping.NewUSBResource,
 		metrics.NewMetricsServerResource,
@@ -525,11 +527,13 @@ func (p *proxmoxProvider) DataSources(_ context.Context) []func() datasource.Dat
 		acme.NewACMEPluginsDataSource,
 		apt.NewRepositoryDataSource,
 		apt.NewStandardRepositoryDataSource,
+		datastores.NewDataSource,
 		ha.NewHAGroupDataSource,
 		ha.NewHAGroupsDataSource,
 		ha.NewHAResourceDataSource,
 		ha.NewHAResourcesDataSource,
 		hardwaremapping.NewDataSource,
+		hardwaremapping.NewDirDataSource,
 		hardwaremapping.NewPCIDataSource,
 		hardwaremapping.NewUSBDataSource,
 		metrics.NewMetricsServerDatasource,

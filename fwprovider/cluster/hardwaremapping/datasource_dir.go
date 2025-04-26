@@ -18,25 +18,23 @@ import (
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/attribute"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/config"
 	customtypes "github.com/bpg/terraform-provider-proxmox/fwprovider/types/hardwaremapping"
-	"github.com/bpg/terraform-provider-proxmox/fwprovider/validators"
 	mappings "github.com/bpg/terraform-provider-proxmox/proxmox/cluster/mapping"
 	proxmoxtypes "github.com/bpg/terraform-provider-proxmox/proxmox/types/hardwaremapping"
 )
 
 // Ensure the implementation satisfies the required interfaces.
 var (
-	_ datasource.DataSource              = &pciDataSource{}
-	_ datasource.DataSourceWithConfigure = &pciDataSource{}
+	_ datasource.DataSource              = &dirDataSource{}
+	_ datasource.DataSourceWithConfigure = &dirDataSource{}
 )
 
-// pciDataSource is the data source implementation for a PCI hardware mapping.
-type pciDataSource struct {
-	// client is the hardware mapping API client.
+// dirDataSource is the data source implementation for a directory mapping.
+type dirDataSource struct {
 	client *mappings.Client
 }
 
 // Configure adds the provider-configured client to the data source.
-func (d *pciDataSource) Configure(
+func (d *dirDataSource) Configure(
 	_ context.Context,
 	req datasource.ConfigureRequest,
 	resp *datasource.ConfigureResponse,
@@ -59,13 +57,13 @@ func (d *pciDataSource) Configure(
 }
 
 // Metadata returns the data source type name.
-func (d *pciDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_hardware_mapping_pci"
+func (d *dirDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_hardware_mapping_dir"
 }
 
-// Read fetches the specified PCI hardware mapping from the Proxmox VE API.
-func (d *pciDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var hm modelPCI
+// Read fetches the specified directory mapping from the Proxmox VE API.
+func (d *dirDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var hm modelDir
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &hm)...)
 
@@ -77,10 +75,10 @@ func (d *pciDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	// Ensure to keep both in sync since the name represents the ID.
 	hm.ID = hm.Name
 
-	data, err := d.client.Get(ctx, proxmoxtypes.TypePCI, hmID)
+	data, err := d.client.Get(ctx, proxmoxtypes.TypeDir, hmID)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			fmt.Sprintf("Unable to read PCI hardware mapping %q", hmID),
+			fmt.Sprintf("Unable to read directory mapping %q", hmID),
 			err.Error(),
 		)
 
@@ -88,58 +86,35 @@ func (d *pciDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	}
 
 	hm.importFromAPI(ctx, data)
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &hm)...)
 }
 
-// Schema defines the schema for the PCI hardware mapping.
-func (d *pciDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+// Schema defines the schema for the directory mapping.
+func (d *dirDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	comment := dataSourceSchemaBaseAttrComment
 	comment.Optional = false
 	comment.Computed = true
-	comment.Description = "The comment of this PCI hardware mapping."
-	commentMap := comment
-	commentMap.Description = "The comment of the mapped PCI device."
+	comment.Description = "The comment of this directory mapping."
 
 	resp.Schema = schema.Schema{
-		Description: "Retrieves a PCI hardware mapping from a Proxmox VE cluster.",
+		Description: "Retrieves a directory mapping from a Proxmox VE cluster.",
 		Attributes: map[string]schema.Attribute{
 			schemaAttrNameComment: comment,
 			schemaAttrNameMap: schema.SetNestedAttribute{
 				Computed:    true,
-				Description: "The actual map of devices for the hardware mapping.",
+				Description: "The actual map of devices for the directory mapping.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						schemaAttrNameComment: commentMap,
-						schemaAttrNameMapIOMMUGroup: schema.Int64Attribute{
-							Computed:    true,
-							Description: "The IOMMU group attribute of the map.",
-						},
-						schemaAttrNameMapDeviceID: schema.StringAttribute{
-							Computed:    true,
-							Description: "The ID attribute of the map.",
-							Validators: []validator.String{
-								validators.HardwareMappingDeviceIDValidator(),
-							},
-						},
 						schemaAttrNameMapNode: schema.StringAttribute{
 							Computed:    true,
 							Description: "The node name attribute of the map.",
 						},
 						schemaAttrNameMapPath: schema.StringAttribute{
-							// For hardware mappings of type PCI, the path is required while it is optional for USB.
+							// For directory mappings the path is required and refers
+							// to the POSIX path of the directory as visible from the node.
 							Computed:    true,
 							CustomType:  customtypes.PathType{},
 							Description: "The path attribute of the map.",
-						},
-						schemaAttrNameMapSubsystemID: schema.StringAttribute{
-							Computed: true,
-							Description: "The subsystem ID attribute of the map." +
-								"Not mandatory for the Proxmox VE API call, but causes a PCI hardware mapping to be incomplete when " +
-								"not set.",
-							Validators: []validator.String{
-								validators.HardwareMappingDeviceIDValidator(),
-							},
 						},
 					},
 				},
@@ -147,23 +122,19 @@ func (d *pciDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 					setvalidator.SizeAtLeast(1),
 				},
 			},
-			schemaAttrNameMediatedDevices: schema.BoolAttribute{
-				Computed:    true,
-				Description: "Indicates whether to use with mediated devices.",
-			},
 			schemaAttrNameName: schema.StringAttribute{
-				Description: "The name of this PCI hardware mapping.",
+				Description: "The name of this directory mapping.",
 				Required:    true,
 			},
-			schemaAttrNameTerraformID: attribute.ID(
-				"The unique identifier of this PCI hardware mapping data source.",
+			schemaAttrNameTerraformID: attribute.ResourceID(
+				"The unique identifier of this directory mapping data source.",
 			),
 		},
 	}
 }
 
-// NewPCIDataSource returns a new data source for a PCI hardware mapping.
+// NewDirDataSource returns a new data source for a directory mapping.
 // This is a helper function to simplify the provider implementation.
-func NewPCIDataSource() datasource.DataSource {
-	return &pciDataSource{}
+func NewDirDataSource() datasource.DataSource {
+	return &dirDataSource{}
 }

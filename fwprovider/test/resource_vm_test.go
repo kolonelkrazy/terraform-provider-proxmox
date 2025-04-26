@@ -9,10 +9,13 @@
 package test
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 
 	"github.com/bpg/terraform-provider-proxmox/utils"
 )
@@ -21,6 +24,10 @@ func TestAccResourceVM(t *testing.T) {
 	t.Parallel()
 
 	te := InitEnvironment(t)
+	dirName := fmt.Sprintf("dir_%s", gofakeit.Word())
+	te.AddTemplateVars(map[string]interface{}{
+		"DirName": dirName,
+	})
 
 	tests := []struct {
 		name string
@@ -395,6 +402,50 @@ func TestAccResourceVM(t *testing.T) {
 				),
 			},
 		}},
+		{"create virtiofs block", []resource.TestStep{
+			{
+				Config: te.RenderConfig(`
+					resource "proxmox_virtual_environment_hardware_mapping_dir" "test" {
+						name      = "{{.DirName}}"
+
+						map = [{
+							node = "{{.NodeName}}"
+							path = "/mnt"
+						}]
+					}`, WithRootUser()),
+				Check: resource.ComposeTestCheckFunc(
+					ResourceAttributes("proxmox_virtual_environment_hardware_mapping_dir.test", map[string]string{
+						"name":       dirName,
+						"map.0.node": te.NodeName,
+						"map.0.path": "/mnt",
+					}),
+				),
+			},
+			{
+				Config: te.RenderConfig(`
+					resource "proxmox_virtual_environment_vm" "test_vm" {
+						node_name = "{{.NodeName}}"
+						started   = false
+
+						virtiofs {
+							mapping = "{{.DirName}}"
+							cache = "always"
+							direct_io = true
+							expose_acl = false
+							expose_xattr = false
+						}
+					}`, WithRootUser()),
+				Check: resource.ComposeTestCheckFunc(
+					ResourceAttributes("proxmox_virtual_environment_vm.test_vm", map[string]string{
+						"virtiofs.0.mapping":      dirName,
+						"virtiofs.0.cache":        "always",
+						"virtiofs.0.direct_io":    "true",
+						"virtiofs.0.expose_acl":   "false",
+						"virtiofs.0.expose_xattr": "false",
+					}),
+				),
+			},
+		}},
 	}
 
 	for _, tt := range tests {
@@ -479,19 +530,6 @@ func TestAccResourceVMInitialization(t *testing.T) {
 					overwrite_unmanaged = true
 				}`),
 		}}},
-		{"native cloud-init: do not upgrade packages", []resource.TestStep{{
-			Config: te.RenderConfig(`
-				resource "proxmox_virtual_environment_vm" "test_vm_cloudinit3" {
-					node_name = "{{.NodeName}}"
-					started   = false
-					initialization {
-						upgrade = false
-					}
-				}`),
-			Check: ResourceAttributes("proxmox_virtual_environment_vm.test_vm_cloudinit3", map[string]string{
-				"initialization.0.upgrade": "false",
-			}),
-		}}},
 		{"native cloud-init: username should not change", []resource.TestStep{{
 			Config: te.RenderConfig(`
 				resource "proxmox_virtual_environment_vm" "test_vm_cloudinit4" {
@@ -546,6 +584,36 @@ func TestAccResourceVMInitialization(t *testing.T) {
 				"initialization.0.user_account.0.username": "ubuntu",
 				"initialization.0.user_account.0.password": `\*\*\*\*\*\*\*\*\*\*`,
 			}),
+		}}},
+		{"native cloud-init: username update should not cause replacement", []resource.TestStep{{
+			Config: te.RenderConfig(`
+				resource "proxmox_virtual_environment_vm" "test_vm" {
+					node_name = "{{.NodeName}}"
+					started   = false
+					initialization {
+						user_account {
+							username = "ubuntu"
+							password = "password"
+						}
+					}
+				}`),
+		}, {
+			Config: te.RenderConfig(`
+				resource "proxmox_virtual_environment_vm" "test_vm" {
+					node_name = "{{.NodeName}}"
+					started   = false
+					initialization {
+						user_account {
+							username = "ubuntu-updated"
+							password = "password"
+						}
+					}
+				}`),
+			ConfigPlanChecks: resource.ConfigPlanChecks{
+				PreApply: []plancheck.PlanCheck{
+					plancheck.ExpectResourceAction("proxmox_virtual_environment_vm.test_vm", plancheck.ResourceActionUpdate),
+				},
+			},
 		}}},
 	}
 

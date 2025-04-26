@@ -1,5 +1,66 @@
 # Changelog
 
+## [0.76.1](https://github.com/bpg/terraform-provider-proxmox/compare/v0.76.0...v0.76.1) (2025-04-21)
+
+
+### Bug Fixes
+
+* **provider:** improve `known_hosts` handling in SSH client ([#1918](https://github.com/bpg/terraform-provider-proxmox/issues/1918)) ([49d366e](https://github.com/bpg/terraform-provider-proxmox/commit/49d366e45b0741310130c22c875748ffe0348643))
+* **vm:** cloned VM may be recreated/updated on re-apply ([#1914](https://github.com/bpg/terraform-provider-proxmox/issues/1914)) ([5974d8b](https://github.com/bpg/terraform-provider-proxmox/commit/5974d8b3a37835735c182c901ab873ab3b3c71eb))
+
+
+### Miscellaneous
+
+* **code:** move `hardwaremapping` package from `node` to `cluster` in `fwprovider` ([#1917](https://github.com/bpg/terraform-provider-proxmox/issues/1917)) ([fd24c5a](https://github.com/bpg/terraform-provider-proxmox/commit/fd24c5a740446418927aab67b24675f1df655494))
+* **docs:** fix broken links in documentation ([#1916](https://github.com/bpg/terraform-provider-proxmox/issues/1916)) ([d27b24f](https://github.com/bpg/terraform-provider-proxmox/commit/d27b24f5f61e14bc2506594f8968165f8adbf2eb))
+
+## [0.76.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.75.0...v0.76.0) (2025-04-17)
+
+
+### Features
+
+* **hardwaremapping:** Introduce support for directory mappings ([#1902](https://github.com/bpg/terraform-provider-proxmox/issues/1902)) ([6dbff43](https://github.com/bpg/terraform-provider-proxmox/commit/6dbff43bd13fbae86cc5b4fa2075164ef9cf9b62))
+* **vm:** add support for `virtiofs` ([#1900](https://github.com/bpg/terraform-provider-proxmox/issues/1900)) ([55b3f73](https://github.com/bpg/terraform-provider-proxmox/commit/55b3f7391ae03fbed60744a55e7966df20577139))
+
+
+### Bug Fixes
+
+* **vm,lxc:** error parsing disk ID when datastore name contains `.` ([#1894](https://github.com/bpg/terraform-provider-proxmox/issues/1894)) ([1340146](https://github.com/bpg/terraform-provider-proxmox/commit/13401465c9b4136b75d3814f470f0e7f46e05fe6))
+* **vm:** edge case error when cloning a VM with EFI disk ([#1897](https://github.com/bpg/terraform-provider-proxmox/issues/1897)) ([4ca2f32](https://github.com/bpg/terraform-provider-proxmox/commit/4ca2f32ac63b7f1844566023071adcd7eca12868))
+* **vm:** race condition on reboot causing inconsistent VM state ([#1911](https://github.com/bpg/terraform-provider-proxmox/issues/1911)) ([7fd190a](https://github.com/bpg/terraform-provider-proxmox/commit/7fd190aaebdc1ce13f3023a41d2191d1e4ad9fd2))
+
+
+### Miscellaneous
+
+* **deps:** update golangci/golangci-lint (v2.0.2 → v2.1.2) ([#1903](https://github.com/bpg/terraform-provider-proxmox/issues/1903)) ([ce5cc74](https://github.com/bpg/terraform-provider-proxmox/commit/ce5cc746f99c2d3a9731cdb4594dd66741e263d9))
+* **deps:** update module github.com/hashicorp/terraform-plugin-docs (v0.20.1 → v0.21.0) ([#1898](https://github.com/bpg/terraform-provider-proxmox/issues/1898)) ([504a84c](https://github.com/bpg/terraform-provider-proxmox/commit/504a84cb8354922f429967a7b1bc005774d686b8))
+* **docs:** indicate support of Proxmox VE 8.4 ([#1899](https://github.com/bpg/terraform-provider-proxmox/issues/1899)) ([35a5296](https://github.com/bpg/terraform-provider-proxmox/commit/35a529609d50cdfffbb1506ed6d01d35bb967a70))
+* **vm:** add an acc test for `disk.backup` update edge case ([#1906](https://github.com/bpg/terraform-provider-proxmox/issues/1906)) ([ad41476](https://github.com/bpg/terraform-provider-proxmox/commit/ad41476962c3ff3e7e7ac530fe6f5ad85797b994))
+
+## [0.75.0](https://github.com/bpg/terraform-provider-proxmox/compare/v0.74.1...v0.75.0) (2025-04-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **vm:** remove deprecated `initialization.dns.server`, `initialization.upgrade` ([#1884](https://github.com/bpg/terraform-provider-proxmox/issues/1884))
+* **datastores:** implement new structured format and filters for `datastores` data source ([#1875](https://github.com/bpg/terraform-provider-proxmox/issues/1875))
+
+### Features
+
+* **datastores:** implement new structured format and filters for `datastores` data source ([#1875](https://github.com/bpg/terraform-provider-proxmox/issues/1875)) ([b5b61b4](https://github.com/bpg/terraform-provider-proxmox/commit/b5b61b48dcb4a7a4943d1c40a07928cff34c8b68))
+* **vm:** do not force VM re-create on `initialization.user_account` changes ([#1885](https://github.com/bpg/terraform-provider-proxmox/issues/1885)) ([d631ccb](https://github.com/bpg/terraform-provider-proxmox/commit/d631ccbf908c38a91eefce9b7904f2c1dcc5d20b))
+
+
+### Miscellaneous
+
+* **ci:** pin golangci/golangci-lint-action action to ([#1872](https://github.com/bpg/terraform-provider-proxmox/issues/1872)) ([f7706c8](https://github.com/bpg/terraform-provider-proxmox/commit/f7706c805879d1773de312ca6a8106821e6b44ee))
+* **ci:** Update actions/create-github-app-token action (v1.12.0 → v2.0.2) ([#1880](https://github.com/bpg/terraform-provider-proxmox/issues/1880)) ([3d0c47a](https://github.com/bpg/terraform-provider-proxmox/commit/3d0c47ae7988bd2434e08985dd707892756bd344))
+* **ci:** update lycheeverse/lychee-action action (v2.3.0 → v2.4.0) ([#1873](https://github.com/bpg/terraform-provider-proxmox/issues/1873)) ([ece13f7](https://github.com/bpg/terraform-provider-proxmox/commit/ece13f7716e2bc5f63cd91c33ec0f791a4ae8247))
+* **deps:** update module golang.org/x/crypto (v0.36.0 → v0.37.0) ([#1882](https://github.com/bpg/terraform-provider-proxmox/issues/1882)) ([c526208](https://github.com/bpg/terraform-provider-proxmox/commit/c526208f4bfd16985e0d2ec206da8474d5ec7065))
+* **deps:** update module golang.org/x/net (v0.38.0 → v0.39.0) ([#1887](https://github.com/bpg/terraform-provider-proxmox/issues/1887)) ([5035965](https://github.com/bpg/terraform-provider-proxmox/commit/50359656bdaa8cc92e52b2169a5c1d10dd9ae7ab))
+* **docs:** add known issue to the README about Debian 12 VM requiring a serial device ([#1886](https://github.com/bpg/terraform-provider-proxmox/issues/1886)) ([8e231f9](https://github.com/bpg/terraform-provider-proxmox/commit/8e231f9737113eb62e8969da05620959e320f7f5))
+* **vm:** remove deprecated `initialization.dns.server`, `initialization.upgrade` ([#1884](https://github.com/bpg/terraform-provider-proxmox/issues/1884)) ([51e6d7b](https://github.com/bpg/terraform-provider-proxmox/commit/51e6d7b8db05c5200ce6dd0569c590a2fbe0aed2))
+
 ## [0.74.1](https://github.com/bpg/terraform-provider-proxmox/compare/v0.74.0...v0.74.1) (2025-03-31)
 
 

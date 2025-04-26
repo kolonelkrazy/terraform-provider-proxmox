@@ -13,9 +13,14 @@ A Terraform / OpenTofu Provider that adds support for Proxmox Virtual Environmen
 
 This repository is a fork of <https://github.com/danitso/terraform-provider-proxmox> which is no longer maintained.
 
+## Disclaimer
+
+This project is a personal open-source initiative and is not affiliated with, endorsed by, or associated with any of my current or former employers. All opinions, code, and documentation are solely those of myself and the individual contributors.
+
+The project is not affiliated with [Proxmox Server Solutions GmbH](https://www.proxmox.com/en/about/about-us/company) or any of its subsidiaries. The use of the Proxmox name and/or logo is for informational purposes only and does not imply any endorsement or affiliation with the Proxmox project.
 ## Compatibility Promise
 
-This provider is compatible with Proxmox VE 8.x (currently **8.3**).
+This provider is compatible with Proxmox VE 8.x (currently **8.4**).
 
 > [!IMPORTANT]
 > Proxmox VE 7.x is NOT supported. While some features might work with 7.x, we do not test against it, and issues specific to 7.x will not be addressed.
@@ -95,6 +100,19 @@ If a VM or container resource is created with the provider but managed by an HA 
 This causes a "configuration drift" and the provider will report an error when managing the resource.
 You would need to manually reconcile the resource state stored in the backend to match the actual state of the resource, or remove the resource from the provider management.
 
+### Serial Device Required for Debian 12 / Ubuntu VMs
+
+Debian 12 and Ubuntu VMs throw kernel panic when resizing a cloud image boot disk, as they require a serial device configured.
+Add the following block to your VM config:
+
+```hcl
+  serial_device {
+    device = "socket"
+  }
+```
+
+For more context, see #1639 and #1770.
+
 ### Disk Images Cannot Be Imported by Non-PAM Accounts
 
 Due to limitations in the Proxmox VE API, certain actions need to be performed using SSH. This requires the use of a PAM account (standard Linux account).
@@ -162,6 +180,7 @@ See [CONTRIBUTORS.md](CONTRIBUTORS.md) for a list of contributors to this projec
 - [Greg Brant](https://github.com/gregbrant2)
 - [Serge](https://github.com/sergelogvinov)
 - [Daniel Brennand](https://github.com/dbrennand)
+- [Brian King](https://github.com/inflatador)
 
 Thanks again for your continuous support, it is much appreciated! 🙏
 

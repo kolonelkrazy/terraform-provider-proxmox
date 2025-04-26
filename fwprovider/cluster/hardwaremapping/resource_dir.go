@@ -24,34 +24,33 @@ import (
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/attribute"
 	"github.com/bpg/terraform-provider-proxmox/fwprovider/config"
 	customtypes "github.com/bpg/terraform-provider-proxmox/fwprovider/types/hardwaremapping"
-	"github.com/bpg/terraform-provider-proxmox/fwprovider/validators"
 	mappings "github.com/bpg/terraform-provider-proxmox/proxmox/cluster/mapping"
 	proxmoxtypes "github.com/bpg/terraform-provider-proxmox/proxmox/types/hardwaremapping"
 )
 
 // Ensure the resource implements the required interfaces.
 var (
-	_ resource.Resource                = &usbResource{}
-	_ resource.ResourceWithConfigure   = &usbResource{}
-	_ resource.ResourceWithImportState = &usbResource{}
+	_ resource.Resource                = &dirResource{}
+	_ resource.ResourceWithConfigure   = &dirResource{}
+	_ resource.ResourceWithImportState = &dirResource{}
 )
 
-// usbResource contains the USB hardware mapping resource's internal data.
-type usbResource struct {
+// dirResource contains the directory mapping resource's internal data.
+type dirResource struct {
 	// client is the hardware mapping API client.
 	client *mappings.Client
 }
 
-// read reads information about a USB hardware mapping from the Proxmox VE API.
-func (r *usbResource) read(ctx context.Context, hm *modelUSB) (bool, diag.Diagnostics) {
+// read reads information about a directory mapping from the Proxmox VE API.
+func (r *dirResource) read(ctx context.Context, hm *modelDir) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	hmName := hm.Name.ValueString()
 
-	data, err := r.client.Get(ctx, proxmoxtypes.TypeUSB, hmName)
+	data, err := r.client.Get(ctx, proxmoxtypes.TypeDir, hmName)
 	if err != nil {
 		if strings.Contains(err.Error(), "no such resource") {
-			diags.AddError("Could not read USB hardware mapping", err.Error())
+			diags.AddError("Could not read directory mapping", err.Error())
 		}
 
 		return false, diags
@@ -62,18 +61,18 @@ func (r *usbResource) read(ctx context.Context, hm *modelUSB) (bool, diag.Diagno
 	return true, nil
 }
 
-// readBack reads information about a created or modified USB hardware mapping from the Proxmox VE API then updates the
+// readBack reads information about a created or modified directory mapping from the Proxmox VE API then updates the
 // response state accordingly.
 // The Terraform resource identifier must have been set in the state before this method is called!
-func (r *usbResource) readBack(ctx context.Context, hm *modelUSB, respDiags *diag.Diagnostics, respState *tfsdk.State) {
+func (r *dirResource) readBack(ctx context.Context, hm *modelDir, respDiags *diag.Diagnostics, respState *tfsdk.State) {
 	found, diags := r.read(ctx, hm)
 
 	respDiags.Append(diags...)
 
 	if !found {
 		respDiags.AddError(
-			"USB hardware mapping resource not found after update",
-			"Failed to find the resource when trying to read back the updated USB hardware mapping's data.",
+			"directory mapping resource not found after update",
+			"Failed to find the resource when trying to read back the updated directory mapping's data.",
 		)
 	}
 
@@ -83,7 +82,7 @@ func (r *usbResource) readBack(ctx context.Context, hm *modelUSB, respDiags *dia
 }
 
 // Configure adds the provider-configured client to the resource.
-func (r *usbResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *dirResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -101,9 +100,9 @@ func (r *usbResource) Configure(_ context.Context, req resource.ConfigureRequest
 	r.client = cfg.Client.Cluster().HardwareMapping()
 }
 
-// Create creates a new USB hardware mapping.
-func (r *usbResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var hm modelUSB
+// Create creates a new directory mapping.
+func (r *dirResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var hm modelDir
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &hm)...)
 
@@ -117,9 +116,9 @@ func (r *usbResource) Create(ctx context.Context, req resource.CreateRequest, re
 
 	apiReq := hm.toCreateRequest()
 
-	if err := r.client.Create(ctx, proxmoxtypes.TypeUSB, apiReq); err != nil {
+	if err := r.client.Create(ctx, proxmoxtypes.TypeDir, apiReq); err != nil {
 		resp.Diagnostics.AddError(
-			fmt.Sprintf("Could not create USB hardware mapping %q.", hmName),
+			fmt.Sprintf("Could not create directory mapping %q.", hmName),
 			err.Error(),
 		)
 
@@ -129,9 +128,9 @@ func (r *usbResource) Create(ctx context.Context, req resource.CreateRequest, re
 	r.readBack(ctx, &hm, &resp.Diagnostics, &resp.State)
 }
 
-// Delete deletes an existing USB hardware mapping.
-func (r *usbResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var hm modelUSB
+// Delete deletes an existing directory mapping.
+func (r *dirResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var hm modelDir
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &hm)...)
 
@@ -141,28 +140,28 @@ func (r *usbResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 
 	hmID := hm.Name.ValueString()
 
-	if err := r.client.Delete(ctx, proxmoxtypes.TypeUSB, hmID); err != nil {
+	if err := r.client.Delete(ctx, proxmoxtypes.TypeDir, hmID); err != nil {
 		if strings.Contains(err.Error(), "no such resource") {
 			resp.Diagnostics.AddWarning(
-				"USB hardware mapping does not exist",
+				"directory mapping does not exist",
 				fmt.Sprintf(
-					"Could not delete USB hardware mapping %q, it does not exist or has been deleted outside of Terraform.",
+					"Could not delete directory mapping %q, it does not exist or has been deleted outside of Terraform.",
 					hmID,
 				),
 			)
 		} else {
-			resp.Diagnostics.AddError(fmt.Sprintf("Could not delete USB hardware mapping %q.", hmID), err.Error())
+			resp.Diagnostics.AddError(fmt.Sprintf("Could not delete directory mapping %q.", hmID), err.Error())
 		}
 	}
 }
 
-// ImportState imports a USB hardware mapping from the Proxmox VE API.
-func (r *usbResource) ImportState(
+// ImportState imports a directory mapping from the Proxmox VE API.
+func (r *dirResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
-	data := modelUSB{
+	data := modelDir{
 		ID:   types.StringValue(req.ID),
 		Name: types.StringValue(req.ID),
 	}
@@ -171,16 +170,16 @@ func (r *usbResource) ImportState(
 	r.readBack(ctx, &data, &resp.Diagnostics, &resp.State)
 }
 
-// Metadata defines the name of the USB hardware mapping.
-func (r *usbResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_hardware_mapping_usb"
+// Metadata defines the name of the directory mapping.
+func (r *dirResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_hardware_mapping_dir"
 }
 
-// Read reads the USB hardware mapping.
+// Read reads the directory mapping.
 //
 
-func (r *usbResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data modelUSB
+func (r *dirResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data modelDir
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
@@ -200,42 +199,32 @@ func (r *usbResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	}
 }
 
-// Schema defines the schema for the USB hardware mapping.
-func (r *usbResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema defines the schema for the directory mapping.
+func (r *dirResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	comment := resourceSchemaBaseAttrComment
-	comment.Description = "The comment of this USB hardware mapping."
-	commentMap := comment
-	commentMap.Description = "The comment of the mapped USB device."
+	comment.Description = "The comment of this directory mapping."
 
 	resp.Schema = schema.Schema{
-		Description: "Manages a USB hardware mapping in a Proxmox VE cluster.",
+		Description: "Manages a directory mapping in a Proxmox VE cluster.",
 		Attributes: map[string]schema.Attribute{
 			schemaAttrNameComment: comment,
 			schemaAttrNameMap: schema.SetNestedAttribute{
 				Description: "The actual map of devices for the hardware mapping.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						schemaAttrNameComment: commentMap,
-						schemaAttrNameMapDeviceID: schema.StringAttribute{
-							Description: "The ID of the map.",
-							Required:    true,
-							Validators: []validator.String{
-								validators.HardwareMappingDeviceIDValidator(),
-							},
-						},
 						schemaAttrNameMapNode: schema.StringAttribute{
-							Description: "The node name of the map.",
+							Description: "The node this mapping applies to.",
 							Required:    true,
 						},
 						schemaAttrNameMapPath: schema.StringAttribute{
 							CustomType: customtypes.PathType{},
-							Description: "The path of the map. For hardware mappings of type USB the path is optional and indicates" +
-								" that the device is mapped through the device ID instead of ports.",
-							Optional: true,
+							Description: "The path of the map. For directory mappings the path is required and refers" +
+								" to the POSIX path of the directory as visible from the node.",
+							Required: true,
 							Validators: []validator.String{
 								stringvalidator.RegexMatches(
-									customtypes.PathUSBValueRegEx,
-									ErrResourceMessageInvalidPath(proxmoxtypes.TypeUSB),
+									customtypes.PathDirValueRegEx,
+									ErrResourceMessageInvalidPath(proxmoxtypes.TypeDir),
 								),
 							},
 						},
@@ -247,19 +236,19 @@ func (r *usbResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				},
 			},
 			schemaAttrNameName: schema.StringAttribute{
-				Description: "The name of this hardware mapping.",
+				Description: "The name of this directory mapping.",
 				Required:    true,
 			},
-			schemaAttrNameTerraformID: attribute.ID(
-				"The unique identifier of this USB hardware mapping resource.",
+			schemaAttrNameTerraformID: attribute.ResourceID(
+				"The unique identifier of this directory mapping resource.",
 			),
 		},
 	}
 }
 
-// Update updates an existing USB hardware mapping.
-func (r *usbResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var hmCurrent, hmPlan modelUSB
+// Update updates an existing directory mapping.
+func (r *dirResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var hmCurrent, hmPlan modelDir
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &hmPlan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &hmCurrent)...)
@@ -272,9 +261,9 @@ func (r *usbResource) Update(ctx context.Context, req resource.UpdateRequest, re
 
 	apiReq := hmPlan.toUpdateRequest(&hmCurrent)
 
-	if err := r.client.Update(ctx, proxmoxtypes.TypeUSB, hmName, apiReq); err != nil {
+	if err := r.client.Update(ctx, proxmoxtypes.TypeDir, hmName, apiReq); err != nil {
 		resp.Diagnostics.AddError(
-			fmt.Sprintf("Could not update USB hardware mapping %q.", hmName),
+			fmt.Sprintf("Could not update directory mapping %q.", hmName),
 			err.Error(),
 		)
 
@@ -284,8 +273,8 @@ func (r *usbResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	r.readBack(ctx, &hmPlan, &resp.Diagnostics, &resp.State)
 }
 
-// NewUSBResource returns a new resource for managing a USB hardware mapping.
+// NewDirResource returns a new resource for managing a directory mapping.
 // This is a helper function to simplify the provider implementation.
-func NewUSBResource() resource.Resource {
-	return &usbResource{}
+func NewDirResource() resource.Resource {
+	return &dirResource{}
 }

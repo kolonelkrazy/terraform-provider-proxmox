@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,27 +31,27 @@ import (
 
 // Ensure the resource implements the required interfaces.
 var (
-	_ resource.Resource                = &pciResource{}
-	_ resource.ResourceWithConfigure   = &pciResource{}
-	_ resource.ResourceWithImportState = &pciResource{}
+	_ resource.Resource                = &usbResource{}
+	_ resource.ResourceWithConfigure   = &usbResource{}
+	_ resource.ResourceWithImportState = &usbResource{}
 )
 
-// pciResource contains the PCI hardware mapping resource's internal data.
-type pciResource struct {
+// usbResource contains the USB hardware mapping resource's internal data.
+type usbResource struct {
 	// client is the hardware mapping API client.
 	client *mappings.Client
 }
 
-// read reads information about a PCI hardware mapping from the Proxmox VE API.
-func (r *pciResource) read(ctx context.Context, hm *modelPCI) (bool, diag.Diagnostics) {
+// read reads information about a USB hardware mapping from the Proxmox VE API.
+func (r *usbResource) read(ctx context.Context, hm *modelUSB) (bool, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	hmName := hm.Name.ValueString()
 
-	data, err := r.client.Get(ctx, proxmoxtypes.TypePCI, hmName)
+	data, err := r.client.Get(ctx, proxmoxtypes.TypeUSB, hmName)
 	if err != nil {
 		if strings.Contains(err.Error(), "no such resource") {
-			diags.AddError("Could not read PCI hardware mapping", err.Error())
+			diags.AddError("Could not read USB hardware mapping", err.Error())
 		}
 
 		return false, diags
@@ -63,18 +62,18 @@ func (r *pciResource) read(ctx context.Context, hm *modelPCI) (bool, diag.Diagno
 	return true, nil
 }
 
-// readBack reads information about a created or modified PCI hardware mapping from the Proxmox VE API then updates the
+// readBack reads information about a created or modified USB hardware mapping from the Proxmox VE API then updates the
 // response state accordingly.
 // The Terraform resource identifier must have been set in the state before this method is called!
-func (r *pciResource) readBack(ctx context.Context, hm *modelPCI, respDiags *diag.Diagnostics, respState *tfsdk.State) {
+func (r *usbResource) readBack(ctx context.Context, hm *modelUSB, respDiags *diag.Diagnostics, respState *tfsdk.State) {
 	found, diags := r.read(ctx, hm)
 
 	respDiags.Append(diags...)
 
 	if !found {
 		respDiags.AddError(
-			"PCI hardware mapping resource not found after update",
-			"Failed to find the resource when trying to read back the updated PCI hardware mapping's data.",
+			"USB hardware mapping resource not found after update",
+			"Failed to find the resource when trying to read back the updated USB hardware mapping's data.",
 		)
 	}
 
@@ -84,7 +83,7 @@ func (r *pciResource) readBack(ctx context.Context, hm *modelPCI, respDiags *dia
 }
 
 // Configure adds the provider-configured client to the resource.
-func (r *pciResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *usbResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -102,9 +101,9 @@ func (r *pciResource) Configure(_ context.Context, req resource.ConfigureRequest
 	r.client = cfg.Client.Cluster().HardwareMapping()
 }
 
-// Create creates a new PCI hardware mapping.
-func (r *pciResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var hm modelPCI
+// Create creates a new USB hardware mapping.
+func (r *usbResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var hm modelUSB
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &hm)...)
 
@@ -116,9 +115,11 @@ func (r *pciResource) Create(ctx context.Context, req resource.CreateRequest, re
 	// Ensure to keep both in sync since the name represents the ID.
 	hm.ID = hm.Name
 
-	if err := r.client.Create(ctx, proxmoxtypes.TypePCI, hm.toCreateRequest()); err != nil {
+	apiReq := hm.toCreateRequest()
+
+	if err := r.client.Create(ctx, proxmoxtypes.TypeUSB, apiReq); err != nil {
 		resp.Diagnostics.AddError(
-			fmt.Sprintf("Could not create PCI hardware mapping %q.", hmName),
+			fmt.Sprintf("Could not create USB hardware mapping %q.", hmName),
 			err.Error(),
 		)
 
@@ -128,9 +129,9 @@ func (r *pciResource) Create(ctx context.Context, req resource.CreateRequest, re
 	r.readBack(ctx, &hm, &resp.Diagnostics, &resp.State)
 }
 
-// Delete deletes an existing PCI hardware mapping.
-func (r *pciResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var hm modelPCI
+// Delete deletes an existing USB hardware mapping.
+func (r *usbResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var hm modelUSB
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &hm)...)
 
@@ -140,28 +141,28 @@ func (r *pciResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 
 	hmID := hm.Name.ValueString()
 
-	if err := r.client.Delete(ctx, proxmoxtypes.TypePCI, hmID); err != nil {
+	if err := r.client.Delete(ctx, proxmoxtypes.TypeUSB, hmID); err != nil {
 		if strings.Contains(err.Error(), "no such resource") {
 			resp.Diagnostics.AddWarning(
-				"PCI hardware mapping does not exist",
+				"USB hardware mapping does not exist",
 				fmt.Sprintf(
-					"Could not delete PCI hardware mapping %q, it does not exist or has been deleted outside of Terraform.",
+					"Could not delete USB hardware mapping %q, it does not exist or has been deleted outside of Terraform.",
 					hmID,
 				),
 			)
 		} else {
-			resp.Diagnostics.AddError(fmt.Sprintf("Could not delete PCI hardware mapping %q.", hmID), err.Error())
+			resp.Diagnostics.AddError(fmt.Sprintf("Could not delete USB hardware mapping %q.", hmID), err.Error())
 		}
 	}
 }
 
-// ImportState imports a PCI hardware mapping from the Proxmox VE API.
-func (r *pciResource) ImportState(
+// ImportState imports a USB hardware mapping from the Proxmox VE API.
+func (r *usbResource) ImportState(
 	ctx context.Context,
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
-	data := modelPCI{
+	data := modelUSB{
 		ID:   types.StringValue(req.ID),
 		Name: types.StringValue(req.ID),
 	}
@@ -170,14 +171,16 @@ func (r *pciResource) ImportState(
 	r.readBack(ctx, &data, &resp.Diagnostics, &resp.State)
 }
 
-// Metadata defines the name of the PCI hardware mapping.
-func (r *pciResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_hardware_mapping_pci"
+// Metadata defines the name of the USB hardware mapping.
+func (r *usbResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_hardware_mapping_usb"
 }
 
-// Read reads the PCI hardware mapping.
-func (r *pciResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data modelPCI
+// Read reads the USB hardware mapping.
+//
+
+func (r *usbResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data modelUSB
 
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
@@ -197,19 +200,19 @@ func (r *pciResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	}
 }
 
-// Schema defines the schema for the PCI hardware mapping.
-func (r *pciResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+// Schema defines the schema for the USB hardware mapping.
+func (r *usbResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	comment := resourceSchemaBaseAttrComment
-	comment.Description = "The comment of this PCI hardware mapping."
+	comment.Description = "The comment of this USB hardware mapping."
 	commentMap := comment
-	commentMap.Description = "The comment of the mapped PCI device."
+	commentMap.Description = "The comment of the mapped USB device."
 
 	resp.Schema = schema.Schema{
-		Description: "Manages a PCI hardware mapping in a Proxmox VE cluster.",
+		Description: "Manages a USB hardware mapping in a Proxmox VE cluster.",
 		Attributes: map[string]schema.Attribute{
 			schemaAttrNameComment: comment,
 			schemaAttrNameMap: schema.SetNestedAttribute{
-				Description: "The actual map of devices for the PCI hardware mapping.",
+				Description: "The actual map of devices for the hardware mapping.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						schemaAttrNameComment: commentMap,
@@ -220,33 +223,20 @@ func (r *pciResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 								validators.HardwareMappingDeviceIDValidator(),
 							},
 						},
-						schemaAttrNameMapIOMMUGroup: schema.Int64Attribute{
-							Description: "The IOMMU group of the map. Not mandatory for the Proxmox VE API call, " +
-								"but causes a PCI hardware mapping to be incomplete when not set",
-							Optional: true,
-						},
 						schemaAttrNameMapNode: schema.StringAttribute{
 							Description: "The node name of the map.",
 							Required:    true,
 						},
 						schemaAttrNameMapPath: schema.StringAttribute{
-							CustomType:  customtypes.PathType{},
-							Description: "The path of the map.",
-							// For hardware mappings of type PCI, the path is required while it is optional for USB.
-							Required: true,
-							Validators: []validator.String{
-								stringvalidator.RegexMatches(
-									customtypes.PathPCIValueRegEx,
-									ErrResourceMessageInvalidPath(proxmoxtypes.TypePCI),
-								),
-							},
-						},
-						schemaAttrNameMapSubsystemID: schema.StringAttribute{
-							Description: "The subsystem ID group of the map. Not mandatory for the Proxmox VE API call, " +
-								"but causes a PCI hardware mapping to be incomplete when not set",
+							CustomType: customtypes.PathType{},
+							Description: "The path of the map. For hardware mappings of type USB the path is optional and indicates" +
+								" that the device is mapped through the device ID instead of ports.",
 							Optional: true,
 							Validators: []validator.String{
-								validators.HardwareMappingDeviceIDValidator(),
+								stringvalidator.RegexMatches(
+									customtypes.PathUSBValueRegEx,
+									ErrResourceMessageInvalidPath(proxmoxtypes.TypeUSB),
+								),
 							},
 						},
 					},
@@ -256,26 +246,20 @@ func (r *pciResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 					setvalidator.SizeAtLeast(1),
 				},
 			},
-			schemaAttrNameMediatedDevices: schema.BoolAttribute{
-				Optional:    true,
-				Computed:    true,
-				Default:     booldefault.StaticBool(false),
-				Description: "Indicates whether to enable mediated devices.",
-			},
 			schemaAttrNameName: schema.StringAttribute{
-				Description: "The name of this PCI hardware mapping.",
+				Description: "The name of this hardware mapping.",
 				Required:    true,
 			},
-			schemaAttrNameTerraformID: attribute.ID(
-				"The unique identifier of this PCI hardware mapping resource.",
+			schemaAttrNameTerraformID: attribute.ResourceID(
+				"The unique identifier of this USB hardware mapping resource.",
 			),
 		},
 	}
 }
 
-// Update updates an existing PCI hardware mapping.
-func (r *pciResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var hmCurrent, hmPlan modelPCI
+// Update updates an existing USB hardware mapping.
+func (r *usbResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var hmCurrent, hmPlan modelUSB
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &hmPlan)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &hmCurrent)...)
@@ -286,14 +270,11 @@ func (r *pciResource) Update(ctx context.Context, req resource.UpdateRequest, re
 
 	hmName := hmPlan.Name.ValueString()
 
-	if err := r.client.Update(
-		ctx,
-		proxmoxtypes.TypePCI,
-		hmName,
-		hmPlan.toUpdateRequest(&hmCurrent),
-	); err != nil {
+	apiReq := hmPlan.toUpdateRequest(&hmCurrent)
+
+	if err := r.client.Update(ctx, proxmoxtypes.TypeUSB, hmName, apiReq); err != nil {
 		resp.Diagnostics.AddError(
-			fmt.Sprintf("Could not update PCI hardware mapping %q.", hmName),
+			fmt.Sprintf("Could not update USB hardware mapping %q.", hmName),
 			err.Error(),
 		)
 
@@ -303,8 +284,8 @@ func (r *pciResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	r.readBack(ctx, &hmPlan, &resp.Diagnostics, &resp.State)
 }
 
-// NewPCIResource returns a new resource for managing a PCI hardware mapping.
+// NewUSBResource returns a new resource for managing a USB hardware mapping.
 // This is a helper function to simplify the provider implementation.
-func NewPCIResource() resource.Resource {
-	return &pciResource{}
+func NewUSBResource() resource.Resource {
+	return &usbResource{}
 }

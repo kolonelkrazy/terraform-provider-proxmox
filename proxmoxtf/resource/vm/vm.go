@@ -80,16 +80,11 @@ const (
 	dvInitializationDatastoreID         = "local-lvm"
 	dvInitializationInterface           = ""
 	dvInitializationDNSDomain           = ""
-	dvInitializationDNSServer           = ""
 	dvInitializationIPConfigIPv4Address = ""
 	dvInitializationIPConfigIPv4Gateway = ""
 	dvInitializationIPConfigIPv6Address = ""
 	dvInitializationIPConfigIPv6Gateway = ""
 	dvInitializationUserAccountPassword = ""
-	dvInitializationUserDataFileID      = ""
-	dvInitializationVendorDataFileID    = ""
-	dvInitializationNetworkDataFileID   = ""
-	dvInitializationMetaDataFileID      = ""
 	dvInitializationType                = ""
 	dvKeyboardLayout                    = "en-us"
 	dvKVMArguments                      = ""
@@ -130,6 +125,10 @@ const (
 	dvVGAClipboard        = ""
 	dvVGAMemory           = 16
 	dvVGAType             = "std"
+	dvVirtiofsCache       = "auto"
+	dvVirtiofsDirectIo    = false
+	dvVirtiofsExposeAcl   = false
+	dvVirtiofsExposeXattr = false
 	dvSCSIHardware        = "virtio-scsi-pci"
 	dvStopOnDestroy       = false
 	dvHookScript          = ""
@@ -142,7 +141,8 @@ const (
 	maxResourceVirtualEnvironmentVMHostPCIDevices = 16
 	maxResourceVirtualEnvironmentVMHostUSBDevices = 4
 	// hardcoded /usr/share/perl5/PVE/QemuServer/Memory.pm: "our $MAX_NUMA = 8".
-	maxResourceVirtualEnvironmentVMNUMADevices = 8
+	maxResourceVirtualEnvironmentVMNUMADevices  = 8
+	maxResourceVirtualEnvironmentVirtiofsShares = 8
 
 	mkRebootAfterCreation = "reboot"
 	mkRebootAfterUpdate   = "reboot_after_update"
@@ -211,7 +211,6 @@ const (
 	mkInitializationInterface           = "interface"
 	mkInitializationDNS                 = "dns"
 	mkInitializationDNSDomain           = "domain"
-	mkInitializationDNSServer           = "server"
 	mkInitializationDNSServers          = "servers"
 	mkInitializationIPConfig            = "ip_config"
 	mkInitializationIPConfigIPv4        = "ipv4"
@@ -229,7 +228,6 @@ const (
 	mkInitializationVendorDataFileID    = "vendor_data_file_id"
 	mkInitializationNetworkDataFileID   = "network_data_file_id"
 	mkInitializationMetaDataFileID      = "meta_data_file_id"
-	mkInitializationUpgrade             = "upgrade"
 
 	mkKeyboardLayout      = "keyboard_layout"
 	mkKVMArguments        = "kvm_arguments"
@@ -289,6 +287,12 @@ const (
 	mkSCSIHardware         = "scsi_hardware"
 	mkHookScriptFileID     = "hook_script_file_id"
 	mkStopOnDestroy        = "stop_on_destroy"
+	mkVirtiofs             = "virtiofs"
+	mkVirtiofsMapping      = "mapping"
+	mkVirtiofsCache        = "cache"
+	mkVirtiofsDirectIo     = "direct_io"
+	mkVirtiofsExposeAcl    = "expose_acl"
+	mkVirtiofsExposeXattr  = "expose_xattr"
 	mkWatchdog             = "watchdog"
 	// a workaround for the lack of proper support of default and undefined values in SDK.
 	mkWatchdogEnabled = "enabled"
@@ -764,14 +768,6 @@ func VM() *schema.Resource {
 									Optional:    true,
 									Default:     dvInitializationDNSDomain,
 								},
-								mkInitializationDNSServer: {
-									Type:        schema.TypeString,
-									Description: "The DNS server",
-									Deprecated: "The `server` attribute is deprecated and will be removed in a future release. " +
-										"Please use the `servers` attribute instead.",
-									Optional: true,
-									Default:  dvInitializationDNSServer,
-								},
 								mkInitializationDNSServers: {
 									Type:        schema.TypeList,
 									Description: "The list of DNS servers",
@@ -854,7 +850,6 @@ func VM() *schema.Resource {
 						Type:        schema.TypeList,
 						Description: "The user account configuration",
 						Optional:    true,
-						ForceNew:    true,
 						DefaultFunc: func() (interface{}, error) {
 							return []interface{}{}, nil
 						},
@@ -864,14 +859,12 @@ func VM() *schema.Resource {
 									Type:        schema.TypeList,
 									Description: "The SSH keys",
 									Optional:    true,
-									ForceNew:    true,
 									Elem:        &schema.Schema{Type: schema.TypeString},
 								},
 								mkInitializationUserAccountPassword: {
 									Type:        schema.TypeString,
 									Description: "The SSH password",
 									Optional:    true,
-									ForceNew:    true,
 									Sensitive:   true,
 									Default:     dvInitializationUserAccountPassword,
 									DiffSuppressFunc: func(_, oldVal, _ string, _ *schema.ResourceData) bool {
@@ -883,7 +876,6 @@ func VM() *schema.Resource {
 									Type:        schema.TypeString,
 									Description: "The SSH username",
 									Optional:    true,
-									ForceNew:    true,
 								},
 							},
 						},
@@ -894,48 +886,41 @@ func VM() *schema.Resource {
 						Type:             schema.TypeString,
 						Description:      "The ID of a file containing custom user data",
 						Optional:         true,
+						Computed:         true,
 						ForceNew:         true,
-						Default:          dvInitializationUserDataFileID,
 						ValidateDiagFunc: validators.FileID(),
 					},
 					mkInitializationVendorDataFileID: {
 						Type:             schema.TypeString,
 						Description:      "The ID of a file containing vendor data",
 						Optional:         true,
+						Computed:         true,
 						ForceNew:         true,
-						Default:          dvInitializationVendorDataFileID,
 						ValidateDiagFunc: validators.FileID(),
 					},
 					mkInitializationNetworkDataFileID: {
 						Type:             schema.TypeString,
 						Description:      "The ID of a file containing network config",
 						Optional:         true,
+						Computed:         true,
 						ForceNew:         true,
-						Default:          dvInitializationNetworkDataFileID,
 						ValidateDiagFunc: validators.FileID(),
 					},
 					mkInitializationMetaDataFileID: {
 						Type:             schema.TypeString,
 						Description:      "The ID of a file containing meta data config",
 						Optional:         true,
+						Computed:         true,
 						ForceNew:         true,
-						Default:          dvInitializationMetaDataFileID,
 						ValidateDiagFunc: validators.FileID(),
 					},
 					mkInitializationType: {
 						Type:             schema.TypeString,
 						Description:      "The cloud-init configuration format",
 						Optional:         true,
+						Computed:         true,
 						ForceNew:         true,
-						Default:          dvInitializationType,
 						ValidateDiagFunc: CloudInitTypeValidator(),
-					},
-					mkInitializationUpgrade: {
-						Type:        schema.TypeBool,
-						Description: "Whether to do an automatic package upgrade after the first boot",
-						Optional:    true,
-						Computed:    true,
-						Deprecated:  "The `upgrade` attribute is deprecated and will be removed in a future release.",
 					},
 				},
 			},
@@ -1456,6 +1441,7 @@ func VM() *schema.Resource {
 			Type:        schema.TypeList,
 			Description: "The VGA configuration",
 			Optional:    true,
+			Computed:    true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					mkVGAClipboard: {
@@ -1485,6 +1471,51 @@ func VM() *schema.Resource {
 				},
 			},
 			MaxItems: 1,
+			MinItems: 0,
+		},
+		mkVirtiofs: {
+			Type:        schema.TypeList,
+			Description: "Virtiofs share configuration",
+			Optional:    true,
+			DefaultFunc: func() (interface{}, error) {
+				return []interface{}{}, nil
+			},
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					mkVirtiofsMapping: {
+						Type:         schema.TypeString,
+						Description:  "Directory mapping identifier",
+						Required:     true,
+						ValidateFunc: validation.StringIsNotEmpty,
+					},
+					mkVirtiofsCache: {
+						Type:             schema.TypeString,
+						Description:      "The caching mode",
+						Optional:         true,
+						Default:          dvVirtiofsCache,
+						ValidateDiagFunc: VirtiofsCacheValidator(),
+					},
+					mkVirtiofsDirectIo: {
+						Type:        schema.TypeBool,
+						Description: "Whether to allow direct io",
+						Optional:    true,
+						Default:     dvVirtiofsDirectIo,
+					},
+					mkVirtiofsExposeAcl: {
+						Type:        schema.TypeBool,
+						Description: "Enable POSIX ACLs, implies xattr support",
+						Optional:    true,
+						Default:     dvVirtiofsExposeAcl,
+					},
+					mkVirtiofsExposeXattr: {
+						Type:        schema.TypeBool,
+						Description: "Enable support for extended attributes",
+						Optional:    true,
+						Default:     dvVirtiofsExposeXattr,
+					},
+				},
+			},
+			MaxItems: maxResourceVirtualEnvironmentVirtiofsShares,
 			MinItems: 0,
 		},
 		mkVMID: {
@@ -1921,6 +1952,7 @@ func vmCreateClone(ctx context.Context, d *schema.ResourceData, m interface{}) d
 	tabletDevice := types.CustomBool(d.Get(mkTabletDevice).(bool))
 	template := types.CustomBool(d.Get(mkTemplate).(bool))
 	vga := d.Get(mkVGA).([]interface{})
+	virtiofs := d.Get(mkVirtiofs).([]interface{})
 	watchdog := d.Get(mkWatchdog).([]interface{})
 
 	updateBody := &vms.UpdateRequestBody{
@@ -2177,6 +2209,11 @@ func vmCreateClone(ctx context.Context, d *schema.ResourceData, m interface{}) d
 		updateBody.VGADevice = vgaDevice
 	}
 
+	if len(virtiofs) > 0 {
+		virtiofsShares := vmGetVirtiofsShares(d)
+		updateBody.VirtiofsShares = virtiofsShares
+	}
+
 	hookScript := d.Get(mkHookScriptFileID).(string)
 	currentHookScript := vmConfig.HookScript
 
@@ -2257,9 +2294,13 @@ func vmCreateClone(ctx context.Context, d *schema.ResourceData, m interface{}) d
 			continue
 		}
 
-		if efiType != *currentDiskInfo.Type {
+		// the efitype is either "2m" or "4m"
+		// so it's kinda resizing, but with 2 fixed sizes it treated as a "type" by PVE
+		// default is "2m", hence this elaborated check.
+		if (currentDiskInfo.Type != nil && efiType != *currentDiskInfo.Type) ||
+			(currentDiskInfo.Type == nil && efiType != dvEFIDiskType) {
 			return diag.Errorf(
-				"resizing of efidisks is not supported.",
+				"changing the EFI disk type (4m / 2m) is not supported",
 			)
 		}
 
@@ -2553,6 +2594,7 @@ func vmCreateCustom(ctx context.Context, d *schema.ResourceData, m interface{}) 
 	tabletDevice := types.CustomBool(d.Get(mkTabletDevice).(bool))
 	template := types.CustomBool(d.Get(mkTemplate).(bool))
 
+	virtiofsShares := vmGetVirtiofsShares(d)
 	vgaDevice := vmGetVGADeviceObject(d)
 
 	vmIDUntyped, hasVMID := d.GetOk(mkVMID)
@@ -2711,6 +2753,7 @@ func vmCreateCustom(ctx context.Context, d *schema.ResourceData, m interface{}) 
 		TabletDeviceEnabled:  &tabletDevice,
 		Template:             &template,
 		USBDevices:           usbDeviceObjects,
+		VirtiofsShares:       virtiofsShares,
 		VGADevice:            vgaDevice,
 		VMID:                 vmID,
 		WatchdogDevice:       watchdogObject,
@@ -2819,14 +2862,8 @@ func vmCreateStart(ctx context.Context, d *schema.ResourceData, m interface{}) d
 	if reboot {
 		rebootTimeoutSec := d.Get(mkTimeoutReboot).(int)
 
-		err := vmAPI.RebootVM(
-			ctx,
-			&vms.RebootRequestBody{
-				Timeout: &rebootTimeoutSec,
-			},
-		)
-		if err != nil {
-			return diag.FromErr(err)
+		if e := vmAPI.RebootVMAndWaitForRunning(ctx, rebootTimeoutSec); e != nil {
+			return diag.FromErr(e)
 		}
 	}
 
@@ -2874,14 +2911,11 @@ func vmGetCloudInitConfig(d *schema.ResourceData) *vms.CustomCloudInitConfig {
 		}
 
 		servers := initializationDNSBlock[mkInitializationDNSServers].([]interface{})
-		deprecatedServer := initializationDNSBlock[mkInitializationDNSServer].(string)
 
 		if len(servers) > 0 {
 			nameserver := strings.Join(utils.ConvertToStringSlice(servers), " ")
 
 			initializationConfig.Nameserver = &nameserver
-		} else if deprecatedServer != "" {
-			initializationConfig.Nameserver = &deprecatedServer
 		}
 	}
 
@@ -3368,6 +3402,41 @@ func vmGetTagsString(d *schema.ResourceData) string {
 	return strings.Join(sanitizedTags, ";")
 }
 
+func vmGetVirtiofsShares(d *schema.ResourceData) vms.CustomVirtiofsShares {
+	virtiofs := d.Get(mkVirtiofs).([]interface{})
+	virtiofsShares := make(vms.CustomVirtiofsShares, len(virtiofs))
+
+	for i, virtiofsShare := range virtiofs {
+		block := virtiofsShare.(map[string]interface{})
+
+		mapping, _ := block[mkVirtiofsMapping].(string)
+		cache, _ := block[mkVirtiofsCache].(string)
+		direct_io := types.CustomBool(block[mkVirtiofsDirectIo].(bool))
+		expose_acl := types.CustomBool(block[mkVirtiofsExposeAcl].(bool))
+		expose_xattr := types.CustomBool(block[mkVirtiofsExposeXattr].(bool))
+
+		share := vms.CustomVirtiofsShare{
+			DirId:       mapping,
+			DirectIo:    &direct_io,
+			ExposeAcl:   &expose_acl,
+			ExposeXattr: &expose_xattr,
+		}
+
+		if cache != "" {
+			share.Cache = &cache
+		}
+
+		if share.ExposeAcl != nil && *share.ExposeAcl && share.ExposeXattr == nil {
+			bv := types.CustomBool(true)
+			share.ExposeXattr = &bv
+		}
+
+		virtiofsShares[fmt.Sprintf("virtiofs%d", i)] = &share
+	}
+
+	return virtiofsShares
+}
+
 func vmGetVGADeviceObject(d *schema.ResourceData) *vms.CustomVGADevice {
 	vga := d.Get(mkVGA).([]interface{})
 	if len(vga) > 0 && vga[0] != nil {
@@ -3466,7 +3535,16 @@ func vmReadCustom(
 		return diag.FromErr(e)
 	}
 
-	diags := vmReadPrimitiveValues(d, vmConfig, vmStatus)
+	var diags diag.Diagnostics
+
+	if !d.Get(mkTemplate).(bool) {
+		// we shouldn't be updating this attribute at read. Instead, the current status should be captured
+		// in a separate computed attribute. To be addressed in v1.0
+		err := d.Set(mkStarted, vmStatus.Status == "running")
+		diags = append(diags, diag.FromErr(err)...)
+	}
+
+	diags = append(diags, vmReadPrimitiveValues(d, vmConfig)...)
 	if diags.HasError() {
 		return diags
 	}
@@ -3779,7 +3857,7 @@ func vmReadCustom(
 			// from the default qcow2, so we need to read it from the storage API to make sure we have the correct value
 			volume, err := client.Node(nodeName).Storage(fileIDParts[0]).GetDatastoreFile(ctx, vmConfig.EFIDisk.FileVolume)
 			if err != nil {
-				diags = append(diags, diag.FromErr(e)...)
+				diags = append(diags, diag.FromErr(err)...)
 			} else {
 				efiDisk[mkEFIDiskFileFormat] = volume.FileFormat
 			}
@@ -3967,6 +4045,55 @@ func vmReadCustom(
 		diags = append(diags, diag.FromErr(err)...)
 	}
 
+	currentVirtiofsList := d.Get(mkVirtiofs).([]interface{})
+	virtiofsMap := map[string]interface{}{}
+
+	for pi, pp := range vmConfig.VirtiofsShares {
+		if pp == nil {
+			continue
+		}
+
+		share := map[string]interface{}{}
+
+		share[mkVirtiofsMapping] = pp.DirId
+
+		if pp.Cache != nil {
+			share[mkVirtiofsCache] = *pp.Cache
+		} else {
+			share[mkVirtiofsCache] = dvVirtiofsCache
+		}
+
+		if pp.DirectIo != nil {
+			share[mkVirtiofsDirectIo] = *pp.DirectIo
+		} else {
+			share[mkVirtiofsDirectIo] = dvVirtiofsDirectIo
+		}
+
+		if pp.ExposeAcl != nil {
+			share[mkVirtiofsExposeAcl] = *pp.ExposeAcl
+		} else {
+			share[mkVirtiofsExposeAcl] = dvVirtiofsExposeAcl
+		}
+
+		switch {
+		case pp.ExposeXattr != nil:
+			share[mkVirtiofsExposeXattr] = *pp.ExposeXattr
+		case pp.ExposeAcl != nil && bool(*pp.ExposeAcl):
+			// expose-xattr implies expose-acl
+			share[mkVirtiofsExposeXattr] = true
+		default:
+			share[mkVirtiofsExposeXattr] = dvVirtiofsExposeXattr
+		}
+
+		virtiofsMap[pi] = share
+	}
+
+	if len(clone) == 0 || len(currentVirtiofsList) > 0 {
+		orderedVirtiofsList := utils.OrderedListFromMap(virtiofsMap)
+		err := d.Set(mkVirtiofs, orderedVirtiofsList)
+		diags = append(diags, diag.FromErr(err)...)
+	}
+
 	// Compare the initialization configuration to the one stored in the state.
 	initialization := map[string]interface{}{}
 
@@ -3988,30 +4115,10 @@ func vmReadCustom(
 			initializationDNS[mkInitializationDNSDomain] = ""
 		}
 
-		// check what we have in the plan
-		currentInitializationDNSBlock := map[string]interface{}{}
-		currentInitialization := d.Get(mkInitialization).([]interface{})
-
-		if len(currentInitialization) > 0 && currentInitialization[0] != nil {
-			currentInitializationBlock := currentInitialization[0].(map[string]interface{})
-			currentInitializationDNS := currentInitializationBlock[mkInitializationDNS].([]interface{})
-
-			if len(currentInitializationDNS) > 0 && currentInitializationDNS[0] != nil {
-				currentInitializationDNSBlock = currentInitializationDNS[0].(map[string]interface{})
-			}
-		}
-
-		currentInitializationDNSServer, ok := currentInitializationDNSBlock[mkInitializationDNSServer]
 		if vmConfig.CloudInitDNSServer != nil {
-			if ok && currentInitializationDNSServer != "" {
-				// the template is using deprecated attribute mkInitializationDNSServer
-				initializationDNS[mkInitializationDNSServer] = *vmConfig.CloudInitDNSServer
-			} else {
-				dnsServer := strings.Split(*vmConfig.CloudInitDNSServer, " ")
-				initializationDNS[mkInitializationDNSServers] = dnsServer
-			}
+			dnsServer := strings.Split(*vmConfig.CloudInitDNSServer, " ")
+			initializationDNS[mkInitializationDNSServers] = dnsServer
 		} else {
-			initializationDNS[mkInitializationDNSServer] = ""
 			initializationDNS[mkInitializationDNSServers] = []string{}
 		}
 
@@ -4588,7 +4695,6 @@ func vmReadCustom(
 func vmReadPrimitiveValues(
 	d *schema.ResourceData,
 	vmConfig *vms.GetResponseData,
-	vmStatus *vms.GetStatusResponseData,
 ) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -4722,11 +4828,6 @@ func vmReadPrimitiveValues(
 		diags = append(diags, diag.FromErr(err)...)
 	}
 
-	if !d.Get(mkTemplate).(bool) {
-		err = d.Set(mkStarted, vmStatus.Status == "running")
-		diags = append(diags, diag.FromErr(err)...)
-	}
-
 	currentTabletDevice := d.Get(mkTabletDevice).(bool)
 
 	if len(clone) == 0 || !currentTabletDevice {
@@ -4827,7 +4928,7 @@ func vmUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 	if d.HasChange(mkNodeName) {
 		migrateTimeoutSec := d.Get(mkTimeoutMigrate).(int)
 
-		ctx, cancel := context.WithTimeout(ctx, time.Duration(migrateTimeoutSec)*time.Second)
+		migrateCtx, cancel := context.WithTimeout(ctx, time.Duration(migrateTimeoutSec)*time.Second)
 		defer cancel()
 
 		oldNodeNameValue, _ := d.GetChange(mkNodeName)
@@ -4841,7 +4942,7 @@ func vmUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 			OnlineMigration: &trueValue,
 		}
 
-		err := vmAPI.MigrateVM(ctx, migrateBody)
+		err := vmAPI.MigrateVM(migrateCtx, migrateBody)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -5154,11 +5255,12 @@ func vmUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 
 	// Prepare the new cloud-init configuration.
 	stoppedBeforeUpdate := false
+	cloudInitRebuildRequired := false
 
 	if d.HasChange(mkInitialization) {
-		initializationConfig := vmGetCloudInitConfig(d)
+		cloudInitConfig := vmGetCloudInitConfig(d)
 
-		updateBody.CloudInitConfig = initializationConfig
+		updateBody.CloudInitConfig = cloudInitConfig
 
 		initialization := d.Get(mkInitialization).([]interface{})
 
@@ -5199,12 +5301,12 @@ func vmUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 			if mustMove || mustChangeDatastore || existingInterface == "" {
 				// CloudInit must be moved, either from a device to another or from a datastore
 				// to another (or both). This requires the VM to be stopped.
-				if err := vmShutdown(ctx, vmAPI, d); err != nil {
-					return err
+				if er := vmShutdown(ctx, vmAPI, d); er != nil {
+					return er
 				}
 
-				if err := deleteIdeDrives(ctx, vmAPI, initializationInterface, existingInterface); err != nil {
-					return err
+				if er := deleteIdeDrives(ctx, vmAPI, initializationInterface, existingInterface); er != nil {
+					return er
 				}
 
 				stoppedBeforeUpdate = true
@@ -5220,6 +5322,7 @@ func vmUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 			})
 		}
 
+		cloudInitRebuildRequired = true
 		rebootRequired = true
 	}
 
@@ -5378,6 +5481,17 @@ func vmUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 		rebootRequired = true
 	}
 
+	// Prepare the new Virtiofs shares configuration.
+	if d.HasChange(mkVirtiofs) {
+		updateBody.VirtiofsShares = vmGetVirtiofsShares(d)
+
+		for i := len(updateBody.VirtiofsShares); i < maxResourceVirtualEnvironmentVirtiofsShares; i++ {
+			del = append(del, fmt.Sprintf("virtiofs%d", i))
+		}
+
+		rebootRequired = true
+	}
+
 	// Prepare the new SCSI hardware type
 	if d.HasChange(mkSCSIHardware) {
 		scsiHardware := d.Get(mkSCSIHardware).(string)
@@ -5443,11 +5557,17 @@ func vmUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.D
 				return diags
 			}
 		} else {
-			if e := vmShutdown(ctx, vmAPI, d); e != nil {
-				return e
+			if er := vmShutdown(ctx, vmAPI, d); er != nil {
+				return er
 			}
 
 			rebootRequired = false
+		}
+	}
+
+	if cloudInitRebuildRequired {
+		if er := vmAPI.RebuildCloudInitDisk(ctx); er != nil {
+			return diag.FromErr(err)
 		}
 	}
 
@@ -5678,14 +5798,8 @@ func vmUpdateDiskLocationAndSize(
 		if vmStatus.Status != "stopped" {
 			rebootTimeoutSec := d.Get(mkTimeoutReboot).(int)
 
-			err := vmAPI.RebootVM(
-				ctx,
-				&vms.RebootRequestBody{
-					Timeout: &rebootTimeoutSec,
-				},
-			)
-			if err != nil {
-				return diag.FromErr(err)
+			if e := vmAPI.RebootVMAndWaitForRunning(ctx, rebootTimeoutSec); e != nil {
+				return diag.FromErr(e)
 			}
 		}
 	}

@@ -190,7 +190,7 @@ func (r *downloadFileResource) Schema(
 			"It can be fully compatible and faster replacement for image files created using " +
 			"`proxmox_virtual_environment_file`. Supports images for VMs (ISO images) and LXC (CT Templates).",
 		Attributes: map[string]schema.Attribute{
-			"id": attribute.ID(),
+			"id": attribute.ResourceID(),
 			"content_type": schema.StringAttribute{
 				Description: "The file content type. Must be `iso` for VM images or `vztmpl` for LXC images.",
 				Required:    true,
@@ -246,10 +246,10 @@ func (r *downloadFileResource) Schema(
 				Default:     int64default.StaticInt64(600),
 			},
 			"url": schema.StringAttribute{
-				Description: "The URL to download the file from. Format `https?://.*`.",
+				Description: "The URL to download the file from. Must match regex: `" + httpRegex.String() + "`.",
 				Required:    true,
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(httpRegex, "Must match http url regex"),
+					stringvalidator.RegexMatches(httpRegex, "must match HTTP URL regex `"+httpRegex.String()+"`"),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -460,7 +460,7 @@ func (r *downloadFileResource) getURLMetadata(
 	verify := proxmoxtypes.CustomBool(model.Verify.ValueBool())
 
 	queryURLMetadataReq := nodes.QueryURLMetadataGetRequestBody{
-		URL:    model.URL.ValueStringPointer(),
+		URL:    model.URL.ValueString(),
 		Verify: &verify,
 	}
 

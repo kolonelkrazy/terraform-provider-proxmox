@@ -1330,6 +1330,36 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "TomaszDom",
+      "name": "TomaszDom",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9348532?v=4",
+      "profile": "https://github.com/TomaszDom",
+      "contributions": [
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "Guldoman",
+      "name": "Guldoman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2798487?v=4",
+      "profile": "https://github.com/Guldoman",
+      "contributions": [
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "felinira",
+      "name": "Fina",
+      "avatar_url": "https://avatars.githubusercontent.com/u/121945?v=4",
+      "profile": "https://github.com/felinira",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7,
