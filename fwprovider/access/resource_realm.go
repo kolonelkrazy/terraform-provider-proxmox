@@ -53,7 +53,7 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"id": attribute.ID(),
+			"id": attribute.ResourceID(),
 			"path": schema.StringAttribute{
 				Description: "Access control path",
 				Required:    true,
