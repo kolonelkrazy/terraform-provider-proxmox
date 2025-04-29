@@ -17,7 +17,7 @@ import (
 )
 
 func (c *Client) RealmsPath() string {
-	return c.ExpandPath("domains/")
+	return c.ExpandPath("domains")
 }
 
 func (c *Client) RealmPath(id string) string {
