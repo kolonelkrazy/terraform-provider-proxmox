@@ -1,9 +1,9 @@
 NAME=terraform-provider-proxmox
 TARGETS=darwin linux windows
 TERRAFORM_PLUGIN_EXTENSION=
-VERSION=0.77.0# x-release-please-version
+VERSION=0.77.1# x-release-please-version
 
-GOLANGCI_LINT_VERSION=v2.1.5# renovate: depName=golangci/golangci-lint datasource=github-releases
+GOLANGCI_LINT_VERSION=v2.1.6# renovate: depName=golangci/golangci-lint datasource=github-releases
 
 # check if opentofu is installed and use it if it is,
 # otherwise use terraform
