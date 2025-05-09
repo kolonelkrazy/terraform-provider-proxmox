@@ -26,9 +26,9 @@ import (
 )
 
 var (
-	_ resource.Resource              = (*realmResource)(nil)
-	_ resource.ResourceWithConfigure = (*realmResource)(nil)
-	//_ resource.ResourceWithImportState      = (*realmResource)(nil)
+	_ resource.Resource                     = (*realmResource)(nil)
+	_ resource.ResourceWithConfigure        = (*realmResource)(nil)
+	_ resource.ResourceWithImportState      = (*realmResource)(nil)
 	_ resource.ResourceWithConfigValidators = (*realmResource)(nil)
 )
 
@@ -82,9 +82,8 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				},
 			},
 			"type": schema.StringAttribute{
-				Description: "Specifies the Authentication Context Class Reference values" +
-					"that the Authorization Server is being requested to use for the Auth Request.",
-				Optional: false,
+				Description: "Realm type.",
+				Optional:    false,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
 						regexp.MustCompile(`^ad$|^ldap$|^openid$|^pam$|^pve$`),
@@ -93,13 +92,13 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				},
 			},
 			"acr-values": schema.StringAttribute{
-				Description: "The type of realm to be used.\n" +
-					"One of [`ad`, `ldap`, `openid`, `pam`, `pve`]",
+				Description: "Specifies the Authentication Context Class Reference values" +
+					"that theAuthorization Server is being requested to use for the Auth Request.",
 				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
 						regexp.MustCompile(`^[^\x00-\x1F\x7F <>#"]*$`),
-						"must be one of [`ad`, `ldap`, `openid`, `pam`, `pve`]",
+						"Not a valid ACR value",
 					),
 				},
 			},
