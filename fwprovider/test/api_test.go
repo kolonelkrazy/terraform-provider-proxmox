@@ -28,5 +28,4 @@ func TestAPI(t *testing.T) {
 	}
 
 	_ = acc
-
 }

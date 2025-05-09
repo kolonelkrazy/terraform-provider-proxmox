@@ -24,7 +24,11 @@ func (c *Client) RealmPath(id string) string {
 	return fmt.Sprintf("%s/%s", c.RealmsPath(), url.PathEscape(id))
 }
 
-// CreateRealm creates an access Realm.
+/*
+CreateRealm creates an access Realm.
+https://pve.proxmox.com/wiki/User_Management#pveum_authentication_realms
+https://pve.proxmox.com/pve-docs/api-viewer/index.html#/access/domains
+*/
 func (c *Client) CreateRealm(ctx context.Context, d *RealmCreateRequestBody) error {
 	err := c.DoRequest(ctx, http.MethodPost, c.RealmsPath(), d, nil)
 	if err != nil {
@@ -35,6 +39,7 @@ func (c *Client) CreateRealm(ctx context.Context, d *RealmCreateRequestBody) err
 }
 
 // DeleteRealm deletes an access Realm.
+// https://pve.proxmox.com/pve-docs/api-viewer/index.html#/access/domains/{realm}
 func (c *Client) DeleteRealm(ctx context.Context, id string) error {
 	err := c.DoRequest(ctx, http.MethodDelete, c.RealmPath(id), nil, nil)
 	if err != nil {
@@ -45,6 +50,7 @@ func (c *Client) DeleteRealm(ctx context.Context, id string) error {
 }
 
 // GetRealm retrieves an access Realm.
+// https://pve.proxmox.com/pve-docs/api-viewer/index.html#/access/domains/{realm}
 func (c *Client) GetRealm(ctx context.Context, id string) (*RealmGetResponseBody, error) {
 	resBody := &RealmGetResponseBody{}
 
@@ -61,6 +67,7 @@ func (c *Client) GetRealm(ctx context.Context, id string) (*RealmGetResponseBody
 }
 
 // ListRealms retrieves a list of access Realms.
+// https://pve.proxmox.com/pve-docs/api-viewer/index.html#/access/domains/{realm}
 func (c *Client) ListRealms(ctx context.Context) ([]*RealmListResponseData, error) {
 	resBody := &RealmListResponseBody{}
 
@@ -80,7 +87,7 @@ func (c *Client) ListRealms(ctx context.Context) ([]*RealmListResponseData, erro
 	return resBody.Data, nil
 }
 
-// UpdateRealm updates an access Realm.
+// UpdateRealm updates an a Realm.
 func (c *Client) UpdateRealm(ctx context.Context, id string, d *RealmUpdateRequestBody) error {
 	err := c.DoRequest(ctx, http.MethodPut, c.RealmPath(id), d, nil)
 	if err != nil {
