@@ -68,7 +68,6 @@ func (r *realmResource) ConfigValidators(_ context.Context) []resource.ConfigVal
 }
 
 func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
-
 	resp.Schema = schema.Schema{
 		Description: "Manages Realms on the Proxmox cluster",
 		MarkdownDescription: "Manages Realms on the Proxmox cluster.\n\n" +
@@ -185,7 +184,7 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
-						regexp.MustCompile(`(?^:[A-Za-z0-9\.\-_]+)`),
+						regexp.MustCompile(`[A-Za-z0-9._-]+`), // from API docs (?^:[A-Za-z0-9.-_]+) in perl syntax
 						"alphanumeric, period, hyphen, and underscore are the only valid characters",
 					),
 				},
@@ -285,7 +284,7 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
 						regexp.MustCompile(`\w+=[^,]+(,\s*\w+=[^,]+)*`),
-						"must be a comma seperated list of key=vault pairs",
+						"must be a comma separated list of key=vault pairs",
 					),
 				},
 			},
@@ -326,14 +325,16 @@ func (r *realmResource) Metadata(_ context.Context, req resource.MetadataRequest
 }
 
 func (r *realmResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-
 	var plan realmResourceModel
+
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	body := plan.intoCreateBody()
+
 	err := r.client.Access().CreateRealm(ctx, body)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to create Realm", apiCallFailed+err.Error())
@@ -341,6 +342,7 @@ func (r *realmResource) Create(ctx context.Context, req resource.CreateRequest, 
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -349,9 +351,10 @@ func (r *realmResource) Create(ctx context.Context, req resource.CreateRequest, 
 }
 
 func (r *realmResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-
 	var state realmResourceModel
+
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -363,19 +366,21 @@ func (r *realmResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &realms)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 }
 
 func (r *realmResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-
 	var (
 		state realmResourceModel
 		plan  realmResourceModel
 	)
+
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -400,9 +405,10 @@ func (r *realmResource) Update(ctx context.Context, req resource.UpdateRequest, 
 }
 
 func (r *realmResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-
 	var state realmResourceModel
+
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -59,7 +59,7 @@ func (c *Client) GetRealm(ctx context.Context, id string) (*RealmGetResponseBody
 		return nil, fmt.Errorf("error getting Realm: %w", err)
 	}
 
-	if resBody == nil {
+	if resBody.Data == nil {
 		return nil, api.ErrNoDataObjectInResponse
 	}
 
