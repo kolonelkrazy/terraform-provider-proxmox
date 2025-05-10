@@ -75,13 +75,15 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 		Attributes: map[string]schema.Attribute{
 			"realm": schema.StringAttribute{
 				Description: "The ID of the realm which is of type string",
+				Required:    true,
 				Optional:    false,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"type": schema.StringAttribute{
-				Description: "Realm type.",
+				Description: "Realm type",
+				Required:    true,
 				Optional:    false,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
@@ -90,7 +92,7 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					),
 				},
 			},
-			"acr-values": schema.StringAttribute{
+			"acr_values": schema.StringAttribute{
 				Description: "Specifies the Authentication Context Class Reference values" +
 					"that theAuthorization Server is being requested to use for the Auth Request.",
 				Optional: true,
@@ -118,7 +120,7 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Description: "Path to the CA certificate store",
 				Optional:    true,
 			},
-			"case-sensitive": schema.BoolAttribute{
+			"case_sensitive": schema.BoolAttribute{
 				Description: "username is case-sensitive\n" +
 					"default is 1 or true",
 				Optional: true,
@@ -131,16 +133,16 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Description: "Path to the client certificate key",
 				Optional:    true,
 			},
-			"check-connection": schema.BoolAttribute{
+			"check_connection": schema.BoolAttribute{
 				Description: "Check bind connection to the server. \n" +
 					"default is 0 or false",
 				Optional: true,
 			},
-			"client-id": schema.StringAttribute{
+			"client_id": schema.StringAttribute{
 				Description: "OpenID Client ID",
 				Optional:    true,
 			},
-			"client-key": schema.StringAttribute{
+			"client_key": schema.StringAttribute{
 				Description: "OpenID Client Key",
 				Optional:    true,
 			},
@@ -174,12 +176,12 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					"the first value of the DN will be used as name.",
 				Optional: true,
 			},
-			"groups-autocreate": schema.BoolAttribute{
+			"groups_autocreate": schema.BoolAttribute{
 				Description: "Automatically create groups if they do not exist. \n" +
 					"default is 0 or false",
 				Optional: true,
 			},
-			"groups-claim": schema.StringAttribute{
+			"groups_claim": schema.StringAttribute{
 				Description: "OpenID claim used to retrieve groups with.",
 				Optional:    true,
 				Validators: []validator.String{
@@ -189,12 +191,12 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					),
 				},
 			},
-			"groups-overwrite": schema.BoolAttribute{
+			"groups_overwrite": schema.BoolAttribute{
 				Description: "All groups will be overwritten for the user on login. \n" +
 					"default is 0 or false",
 				Optional: true,
 			},
-			"issuer-url": schema.StringAttribute{
+			"issuer_url": schema.StringAttribute{
 				Description: "OpenID Issuer Url",
 				Optional:    true,
 			},
@@ -233,7 +235,7 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					),
 				},
 			},
-			"query-userinfo": schema.BoolAttribute{
+			"query_userinfo": schema.BoolAttribute{
 				Description: "Enables querying the userinfo endpoint for claims values. \n" +
 					"default is 1 or true",
 				Optional: true,
@@ -266,7 +268,7 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					),
 				},
 			},
-			"sync-defaults-options": schema.StringAttribute{
+			"sync_defaults_options": schema.StringAttribute{
 				Description: "The default options for behavior of synchronizations." +
 					"[enable-new=<1|0>]\n" +
 					"[,full=<1|0>]\n" +
@@ -307,7 +309,7 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					"default is `inetorgperson, posixaccount, person, user`",
 				Optional: true,
 			},
-			"username-claim": schema.StringAttribute{
+			"username_claim": schema.StringAttribute{
 				Description: "OpenID claim used to generate the unique username.",
 				Optional:    true,
 			},
