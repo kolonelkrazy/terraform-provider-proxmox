@@ -222,7 +222,7 @@ func (r *realmResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					int32validator.AtLeast(65535),
 				},
 			},
-			"promt": schema.StringAttribute{
+			"prompt": schema.StringAttribute{
 				Description: "Specifies whether the Authorization Server prompts the End-User" +
 					"for reauthentication and consent.",
 				Optional: true,
