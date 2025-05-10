@@ -1,0 +1,93 @@
+---
+layout: page
+title: {{.Name}}
+parent: Resources
+subcategory: Virtual Environment
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Type}}: {{.Name}}
+
+{{ .Description | trimspace }}
+
+~> There are 3 types of external authentication that can be configured with proxmox, and they have seperate options: Microsoft Active Directory - (`ad`), OpenID Connect - (`openid`), and LDAP - (`ldap`). 
+
+### Microsoft Active Directory
+Microsoft Active Directory (ad) is a directory service for Windows domain networks and is supported as an authentication realm for Proxmox VE. It supports LDAP as an authentication protocol. 
+
+The main configuration settings for Microsoft Active Directory are:
+* Realm (realm): The realm identifier for Proxmox VE users
+* Domain (domain): The AD domain of the server
+* Server (server1): The FQDN or IP address of the server
+* Fallback Server (server2): An optional fallback server address, in case the primary server is unreachable
+* Port (port): The port that the Microsoft AD server listens on
+
+
+### OpenID Connect
+OpenID Connect is implemented as an identity layer on top of the OAuth 2.0 protocol. It allows clients to verify the identity of the user, based on authentication performed by an external authorization server.
+* Issuer URL (issuer-url): This is the URL of the authorization server. Proxmox VE uses the OpenID Connect Discovery protocol to automatically configure further details.
+* Realm (realm): The realm identifier for Proxmox VE users
+* Client ID (client-id): OpenID Client ID.
+* Client Key (client-key): Optional OpenID Client Key.
+* Autocreate Users (autocreate): Automatically create users if they do not exist. While authentication is done at the OpenID server, all users still need an entry in the Proxmox VE user configuration. You can either add them manually, or use the autocreate option to automatically add new users.
+* Username Claim (username-claim): OpenID claim used to generate the unique username (subject, username or email).
+* Autocreate Groups (groups-autocreate): Create all groups in the claim instead of using existing PVE groups (default behavior).
+* Groups Claim (groups-claim): OpenID claim used to retrieve the groups from the ID token or userinfo endpoint.
+* Overwrite Groups (groups-overwrite): Overwrite all groups assigned to user instead of appending to existing groups (default behavior).
+
+
+### LDAP
+LDAP (Lightweight Directory Access Protocol) is an open, cross-platform protocol for authentication using directory services. OpenLDAP is a popular open-source implementations of the LDAP protocol. 
+
+The main configuration options for an LDAP server realm are as follows:
+
+* Realm (realm): The realm identifier for Proxmox VE users
+* Base Domain Name (base_dn): The directory which users are searched under
+* User Attribute Name (user_attr): The LDAP attribute containing the username that users will log in with
+* Server (server1): The server hosting the LDAP directory
+* Fallback Server (server2): An optional fallback server address, in case the primary server is unreachable
+* Port (port): The port that the LDAP server listens on
+
+## Sync (for Microsoft Active Directory and LDAP)
+
+### Configuration
+The configuration options are as follows:
+
+* Bind User (bind_dn): Refers to the LDAP account used to query users and groups. This account needs access to all desired entries. If it’s set, the search will be carried out via binding; otherwise, the search will be carried out anonymously. The user must be a complete LDAP formatted distinguished name (DN), for example, cn=admin,dc=example,dc=com.
+* Groupname attr. (group_name_attr): Represents the users' groups. Only entries which adhere to the usual character limitations of the user.cfg are synced. Groups are synced with -$realm attached to the name, in order to avoid naming conflicts. Please ensure that a sync does not overwrite manually created groups.
+* User classes (user_classes): Objects classes associated with users.
+* Group classes (group_classes): Objects classes associated with groups.
+* E-Mail attribute: If the LDAP-based server specifies user email addresses, these can also be included in the sync by setting the associated attribute here. From the command line, this is achievable through the --sync_attributes parameter.
+* User Filter (filter): For further filter options to target specific users.
+* Group Filter (group_filter): For further filter options to target specific groups.
+
+### Options
+These options are either set as parameters before the sync, or as defaults via the realm option `sync-defaults-options`.
+
+The main options for syncing are:
+
+* Scope (scope): The scope of what to sync. It can be either users, groups or both.
+* Enable new (enable-new): If set, the newly synced users are enabled and can log in. The default is true.
+* Remove Vanished (remove-vanished): This is a list of options which, when activated, determine if they are removed when they are not returned from the sync response. The options are:
+    * ACL (acl): Remove ACLs of users and groups which were not returned returned in the sync response. This most often makes sense together with Entry.
+    * Entry (entry): Removes entries (i.e. users and groups) when they are not returned in the sync response.
+    * Properties (properties): Removes properties of entries where the user in the sync response did not contain those attributes. This includes all properties, even those never set by a sync. Exceptions are tokens and the enable flag, these will be retained even with this option enabled.
+* Preview (dry-run): No data is written to the config. This is useful if you want to see which users and groups would get synced to the user.cfg.
+
+
+{{ if .HasExample -}}
+## Example Usage
+
+{{ codefile "terraform" .ExampleFile }}
+{{- end }}
+
+{{ .SchemaMarkdown | trimspace }}
+{{- if .HasImport }}
+
+## Import
+
+Import is supported using the following syntax:
+
+{{ codefile "shell" .ImportFile }}
+{{- end }}
