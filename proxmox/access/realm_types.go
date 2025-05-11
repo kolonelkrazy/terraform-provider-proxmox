@@ -52,51 +52,53 @@ type RealmCreateRequestBody struct {
 }
 
 type RealmGetResponseBody struct {
-	Data []*RealmGetResponseData `json:"data,omitempty"`
+	Data *RealmGetResponseData `json:"data,omitempty"`
 }
 
 // RealmGetResponseBody contains the body from an a realm get response.
 type RealmGetResponseData struct {
-	AcrValues           string `json:"acr-values,omitempty"`
-	AutoCreate          bool   `json:"autocreate,omitempty"`
-	BaseDn              string `json:"base_dn,omitempty"`
-	BindDn              string `json:"bind_dn,omitempty"`
-	CaPath              string `json:"capath,omitempty"`
-	CaseSensitive       bool   `json:"case-sensitive,omitempty"`
-	Cert                string `json:"cert,omitempty"`
-	CertKey             string `json:"certkey,omitempty"`
-	CheckConnection     bool   `json:"check-connection,omitempty"`
-	ClientId            string `json:"client-id,omitempty"`
-	ClientKey           string `json:"client-key,omitempty"`
-	Comment             string `json:"comment,omitempty"`
-	Default             bool   `json:"default,omitempty"`
-	Domain              string `json:"domain,omitempty"`
-	Filter              string `json:"filter,omitempty"`
-	GroupClasses        string `json:"group_classes,omitempty"`
-	GroupDn             string `json:"group_dn,omitempty"`
-	GroupFilter         string `json:"group_filter,omitempty"`
-	GroupNameAttr       string `json:"group_name_attr,omitempty"`
-	GroupsAutoCreate    bool   `json:"groups-autocreate,omitempty"`
-	GroupsClaim         bool   `json:"groups-claim,omitempty"`
-	GroupsOverwrite     bool   `json:"groups-overwrite,omitempty"`
-	IssuerUrl           string `json:"issuer-url,omitempty"`
-	Mode                string `json:"mode,omitempty"` /*enum*/
-	Password            string `json:"password,omitempty"`
-	Port                int    `json:"port,omitempty"`
-	Prompt              string `json:"prompt,omitempty"`
-	Scopes              string `json:"scopes,omitempty"`
-	Secure              bool   `json:"secure,omitempty"`
-	Server1             string `json:"server1,omitempty"`
-	Server2             string `json:"server2,omitempty"`
-	SslVersion          string `json:"sslversion,omitempty"` /*enum*/
-	SyncDefaultsOptions string `json:"sync-defaults-options,omitempty"`
-	SyncAttributes      string `json:"sync_attributes,omitempty"`
-	Tfa                 string `json:"tfa,omitempty"` /*enum*/
-	Type                string `json:"type"`          /*enum*/
-	UserAttr            string `json:"user_attr,omitempty"`
-	UserClasses         string `json:"user_classes,omitempty"`
-	UsernameClaim       string `json:"username-claim,omitempty"`
-	Verify              bool   `json:"verify,omitempty"`
+	AcrValues           *string `json:"acr-values,omitempty"`
+	AutoCreate          *bool   `json:"autocreate,omitempty"`
+	BaseDn              *string `json:"base_dn,omitempty"`
+	BindDn              *string `json:"bind_dn,omitempty"`
+	CaPath              *string `json:"capath,omitempty"`
+	CaseSensitive       *bool   `json:"case-sensitive,omitempty"`
+	Cert                *string `json:"cert,omitempty"`
+	CertKey             *string `json:"certkey,omitempty"`
+	CheckConnection     *bool   `json:"check-connection,omitempty"`
+	ClientId            *string `json:"client-id,omitempty"`
+	ClientKey           *string `json:"client-key,omitempty"`
+	Comment             *string `json:"comment,omitempty"`
+	Default             *bool   `json:"default,omitempty"`
+	Digest              *string `json:"digest,omitempty"`
+	Domain              *string `json:"domain,omitempty"`
+	Filter              *string `json:"filter,omitempty"`
+	GroupClasses        *string `json:"group_classes,omitempty"`
+	GroupDn             *string `json:"group_dn,omitempty"`
+	GroupFilter         *string `json:"group_filter,omitempty"`
+	GroupNameAttr       *string `json:"group_name_attr,omitempty"`
+	GroupsAutoCreate    *bool   `json:"groups-autocreate,omitempty"`
+	GroupsClaim         *bool   `json:"groups-claim,omitempty"`
+	GroupsOverwrite     *bool   `json:"groups-overwrite,omitempty"`
+	IssuerUrl           *string `json:"issuer-url,omitempty"`
+	Mode                *string `json:"mode,omitempty"` /*enum*/
+	Password            *string `json:"password,omitempty"`
+	Plugin              *string `json:"plugin,omitempty"`
+	Port                *int    `json:"port,omitempty"`
+	Prompt              *string `json:"prompt,omitempty"`
+	Scopes              *string `json:"scopes,omitempty"`
+	Secure              *bool   `json:"secure,omitempty"`
+	Server1             *string `json:"server1,omitempty"`
+	Server2             *string `json:"server2,omitempty"`
+	SslVersion          *string `json:"sslversion,omitempty"` /*enum*/
+	SyncDefaultsOptions *string `json:"sync-defaults-options,omitempty"`
+	SyncAttributes      *string `json:"sync_attributes,omitempty"`
+	Tfa                 *string `json:"tfa,omitempty"`  /*enum*/
+	Type                *string `json:"type,omitempty"` /*enum*/
+	UserAttr            *string `json:"user_attr,omitempty"`
+	UserClasses         *string `json:"user_classes,omitempty"`
+	UsernameClaim       *string `json:"username-claim,omitempty"`
+	Verify              *bool   `json:"verify,omitempty"`
 }
 
 // RealmListResponseBody contains the body from an a realm list response.

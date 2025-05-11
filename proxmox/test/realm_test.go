@@ -13,7 +13,7 @@ import (
 	"testing"
 )
 
-func TestAPI(t *testing.T) {
+func TestListRealms(t *testing.T) {
 	t.Parallel()
 
 	te := InitEnvironment(t)
@@ -21,6 +21,7 @@ func TestAPI(t *testing.T) {
 	acc, err := te.AccessClient().ListRealms(te.t.Context())
 	if err != nil {
 		log.Printf("%s", err)
+		t.Fail()
 	}
 
 	for _, obj := range acc {
@@ -28,6 +29,26 @@ func TestAPI(t *testing.T) {
 	}
 
 	_ = acc
+}
+
+func TestGetRealm(t *testing.T) {
+	t.Parallel()
+
+	te := InitEnvironment(t)
+
+	realmList := [...]string{"pve", "pam"}
+
+	for _, realm := range realmList {
+
+		acc, err := te.AccessClient().GetRealm(te.t.Context(), realm)
+		if err != nil {
+			log.Printf("%s", err)
+			t.Fail()
+		}
+
+		log.Printf("%+v\n", acc)
+
+	}
 }
 
 // func TestCreateRealm(t *testing.T) {
